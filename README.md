@@ -21,4 +21,4 @@ defaults to 'HOMO_SAPIENS' if unspecified.
 
 *-o*: the filename to which to write the Excel data. The target filename should be specified with the extension, e.g. "myfile.xls".
 
-Defaults to a randomly-selected job ID with an .xls extension if unspecified.
+Dumps the excel data to stdout if no filename is specified.
