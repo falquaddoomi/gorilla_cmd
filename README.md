@@ -1,5 +1,4 @@
 # Simple GOrilla command-line interface
----
 
 Query the GOrilla service from the command line and receive results in Excel format.
 
