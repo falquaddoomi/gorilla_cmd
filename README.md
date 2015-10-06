@@ -19,8 +19,10 @@ Usage: ./gorilla_cmd.py [-s SPECIES] [-o OUTFILE] genefile
 * MUS_MUSCULUS
 * RATTUS_NORVEGICUS
 
-defaults to 'HOMO_SAPIENS' if unspecified.
+Defaults to 'HOMO_SAPIENS' if unspecified.
 
 *-o*: the filename to which to write the Excel data. The target filename should be specified with the extension, e.g. "myfile.xls".
 
 Dumps the excel data to stdout if no filename is specified.
+
+*(NOTE: this script relies on the argparse module introduced in Python 2.7. If you're running a previous version of Python, you can install the argparse module via pip/wheel.)*
