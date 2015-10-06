@@ -6,6 +6,8 @@ Usage: ./gorilla_cmd.py [-s SPECIES] [-o OUTFILE] genefile
 
 **genefile**: a file containing newline-delimited genes. Consult the sample.txt file for an example.
 
+*-b*: an optional background set to use with the query; by default no background set is used.
+
 *-s*: the species over which to perform the query, from the following options:
 
 * ARABIDOPSIS_THALIANA

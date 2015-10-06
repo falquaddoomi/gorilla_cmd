@@ -1,3 +1,6 @@
+#!/cbio/grlab/home/nrd44/virtualenvs/gorilla_cmd_env/bin/python
+
+# V use below if you're using the virtualenv
 #!/usr/bin/env python
 
 import requests
@@ -28,6 +31,7 @@ class RequestFailedException(Exception):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Sends a remote command to GOrilla returns results(?)')
 	parser.add_argument('genefile', type=argparse.FileType('rb'), help='a file containing newline-delimited genes')
+	parser.add_argument('-b', '--bgfile', type=argparse.FileType('rb'), help='an optional file containing the background set')
 	parser.add_argument('-s', '--species', type=str, help='the species over which to perform the query', choices=SPECIES, default='HOMO_SAPIENS')
 	parser.add_argument('-o', '--outfile', type=str, help='filename to which to write excel results, defaults to stdout if not specified')
 
@@ -38,7 +42,7 @@ if __name__ == "__main__":
 		'species': args.species,
 		'run_mode': 'mhg',
 		'target_set': args.genefile.read(),
-		'background_set': '',
+		'background_set': args.bgfile.read() if args.bgfile else '',
 		'db': 'proc',
 		'run_gogo_button': 'Search Enriched GO terms',
 		'pvalue_thresh': '0.001',
