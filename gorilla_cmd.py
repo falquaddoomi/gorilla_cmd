@@ -4,9 +4,10 @@
 #!/usr/bin/env python
 
 import requests
-import sys, argparse, re, shutil, time
+import os, sys, argparse, re, shutil, time
 
 FORM_URL = """http://cbl-gorilla.cs.technion.ac.il/servlet/GOrilla"""
+RESULTS_URL = """http://cbl-gorilla.cs.technion.ac.il/GOrilla/%s/GOResults.html"""
 EXCEL_URL = """http://cbl-gorilla.cs.technion.ac.il/GOrilla/%s/GO.xls"""
 
 SPECIES = [
@@ -24,9 +25,11 @@ id_grabber = re.compile("id=([^&]+)")
 
 class RequestFailedException(Exception):
 	"""
-	Raised when a POSTed job is rejected for some reason by GOrilla (i.e. the service returns a non-200 HTTP code)
+	Raised when a request is rejected for some reason by GOrilla (i.e. the service returns a non-200 HTTP code)
 	"""
-	pass
+	def __init__(self, url, msg):
+		self.url = url
+		self.msg = msg
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Sends a remote command to GOrilla returns results(?)')
@@ -34,13 +37,15 @@ if __name__ == "__main__":
 	parser.add_argument('-b', '--bgfile', type=argparse.FileType('rb'), help='an optional file containing the background set')
 	parser.add_argument('-s', '--species', type=str, help='the species over which to perform the query', choices=SPECIES, default='HOMO_SAPIENS')
 	parser.add_argument('-o', '--outfile', type=str, help='filename to which to write excel results, defaults to stdout if not specified')
+	parser.add_argument('-v', '--verbose', action="store_true", help='verbose mode')
+	parser.add_argument('-u', '--save_url', action="store_true", help='retain results URL; either append to stdout or write to a file w/same name as output file, but .url extension')
 
 	args = parser.parse_args()
 
 	data = {
 		'application': 'gorilla',
 		'species': args.species,
-		'run_mode': 'mhg',
+		'run_mode': 'hg' if args.bgfile else 'mhg',
 		'target_set': args.genefile.read(),
 		'background_set': args.bgfile.read() if args.bgfile else '',
 		'db': 'proc',
@@ -57,31 +62,42 @@ if __name__ == "__main__":
 
 		r = requests.post(FORM_URL, data=data)
 
+		if args.verbose: print >> sys.stderr, "? requested URL: %s" % r.url
+
 		if r.status_code != 200:
-			raise RequestFailedException("Request to GOrilla failed with code %s" % r.status_code)
+			raise RequestFailedException(r.url, "Request to GOrilla failed with code %s" % r.status_code)
 
 		print >> sys.stderr, "* Got GOrilla response, waiting for results to become available...",
-		time.sleep(5)
+		wait_time = 5
+		time.sleep(wait_time)
 		print >> sys.stderr, "...done, getting results"
 
 		try:
 			job_id = id_grabber.findall(r.url)[0]
 
+			if args.verbose: print >> sys.stderr, "? job ID from redirect response: %s" % job_id
+
 			# use the job ID to perform a second request for the excel data
 			response = requests.get(EXCEL_URL % job_id, stream=True)
 
 			if response.status_code != 200:
-				raise RequestFailedException("Request for excel file failed with code %s" % response.status_code)
+				raise RequestFailedException(response.url, "Request for excel file failed with code %s" % response.status_code)
 
 			if args.outfile:
 				print >> sys.stderr, "* Saving excel results as '%s'..." % args.outfile
 				with open(args.outfile, 'wb') as out_file:
 					shutil.copyfileobj(response.raw, out_file)
 				del response
+
+				if args.save_url:
+					url_filename = "%s.%s" % (os.path.splitext(args.outfile)[0], "url")
+					with open(url_filename, 'w') as url_file:
+						url_file.write("%s\n" % (RESULTS_URL % job_id))
 			else:
 				print response.text
+				print "\n\nResults URL:\t%s" % (RESULTS_URL % job_id)
 
 		except IndexError:
 			print >> sys.stderr, "ERROR: job ID not found in response URL"
 	except RequestFailedException as ex:
-		print >> sys.stderr, "ERROR: %s" % ex.message
+		print >> sys.stderr, "ERROR for %s: %s" % (ex.url, ex.msg)
