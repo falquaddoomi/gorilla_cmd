@@ -25,4 +25,10 @@ Defaults to 'HOMO_SAPIENS' if unspecified.
 
 Dumps the excel data to stdout if no filename is specified.
 
+*-v*: runs the script in verbose mode, which outputs some debugging information to stderr.
+
+*-u*: emits the results URL.
+
+If -o is not specified, the URL is appended to stdout. If -o is specified, the URL is written to a new file with the same path and name as the outfile, but with a .url extension.
+
 *(NOTE: this script relies on the argparse module introduced in Python 2.7. If you're running a previous version of Python, you can install the argparse module via pip/wheel.)*
